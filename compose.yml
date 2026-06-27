@@ -33,7 +33,7 @@ services:
       - postgres
 
   postgres:
-    image: postgres:18
+    image: postgres:17
     container_name: startfield-postgres
     restart: unless-stopped
 
@@ -71,7 +71,7 @@ services:
       - ./data/pgadmin:/var/lib/pgadmin
 
     ports:
-      - "${PGADMIN_PORT}:80"
+      - "${PGADMIN_PORT}:8080"
 
     depends_on:
       - postgres
