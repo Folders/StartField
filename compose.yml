@@ -1,0 +1,77 @@
+name: startfield
+
+services:
+  startfield:
+    image: ghcr.io/folders/startfield:latest
+    container_name: startfield
+    restart: unless-stopped
+    network_mode: host
+
+    environment:
+      TZ: ${TZ}
+
+      # ASP.NET
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:${STARTFIELD_HTTP_PORT}
+
+      # Database parameters
+      DB_TYPE: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: ${POSTGRES_PORT}
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASS: ${POSTGRES_PASSWORD}
+
+      # Communication parameters
+      UDP_LOCAL_PORT: ${UDP_LOCAL_PORT}
+      UDP_BROADCAST_ADDRESS: ${UDP_BROADCAST_ADDRESS}
+      UDP_MAX_ATTEMPTS: ${UDP_MAX_ATTEMPTS}
+      UDP_ACK_TIMEOUT_MS: ${UDP_ACK_TIMEOUT_MS}
+      UDP_MAX_FRAME_LENGTH: ${UDP_MAX_FRAME_LENGTH}
+
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:18
+    container_name: startfield-postgres
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: startfield-pgadmin
+    restart: unless-stopped
+
+    profiles:
+      - tools
+
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+
+    volumes:
+      - ./data/pgadmin:/var/lib/pgadmin
+
+    ports:
+      - "${PGADMIN_PORT}:80"
+
+    depends_on:
+      - postgres
